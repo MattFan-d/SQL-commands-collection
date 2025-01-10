@@ -1,0 +1,346 @@
+-- 1. Basic Table Creation
+CREATE TABLE employees (
+    employee_id INT PRIMARY KEY,
+    first_name VARCHAR(50),
+    last_name VARCHAR(50),
+    hire_date DATE,
+    salary DECIMAL(10, 2),
+    department_id INT
+);
+
+CREATE TABLE departments (
+    department_id INT PRIMARY KEY,
+    department_name VARCHAR(100)
+);
+
+-- 2. Inserting Data
+INSERT INTO employees (employee_id, first_name, last_name, hire_date, salary, department_id)
+VALUES (1, 'John', 'Doe', '2020-01-15', 60000, 1);
+
+INSERT INTO employees (employee_id, first_name, last_name, hire_date, salary, department_id)
+VALUES (2, 'Jane', 'Smith', '2021-03-22', 75000, 2);
+
+INSERT INTO departments (department_id, department_name)
+VALUES (1, 'Human Resources'), (2, 'Engineering');
+
+-- 3. Updating Data
+UPDATE employees
+SET salary = salary * 1.1
+WHERE hire_date < '2021-01-01';
+
+-- 4. Deleting Data
+DELETE FROM employees
+WHERE salary < 50000;
+
+-- 5. Basic SELECT Queries
+SELECT * FROM employees;
+
+SELECT first_name, last_name, salary
+FROM employees
+WHERE salary > 70000;
+
+-- 6. Aggregations
+SELECT department_id, AVG(salary) AS avg_salary
+FROM employees
+GROUP BY department_id;
+
+-- 7. Joining Tables
+SELECT e.first_name, e.last_name, d.department_name
+FROM employees e
+JOIN departments d
+ON e.department_id = d.department_id;
+
+-- 8. Subqueries
+SELECT employee_id, first_name, salary
+FROM employees
+WHERE salary > (SELECT AVG(salary) FROM employees);
+
+-- 9. Using Window Functions
+SELECT first_name, last_name, salary,
+       RANK() OVER (ORDER BY salary DESC) AS rank
+FROM employees;
+
+-- 10. Creating Views
+CREATE VIEW high_earning_employees AS
+SELECT first_name, last_name, salary
+FROM employees
+WHERE salary > 70000;
+
+-- 11. Index Creation
+CREATE INDEX idx_department_id
+ON employees (department_id);
+
+-- 12. Transactions
+BEGIN TRANSACTION;
+
+UPDATE employees
+SET salary = salary * 1.05
+WHERE department_id = 1;
+
+COMMIT;
+
+-- 13. Stored Procedures
+CREATE PROCEDURE GetEmployeeDetails (
+    IN emp_id INT
+)
+BEGIN
+    SELECT * FROM employees
+    WHERE employee_id = emp_id;
+END;
+
+-- 14. Common Table Expressions (CTEs)
+WITH AvgSalaries AS (
+    SELECT department_id, AVG(salary) AS avg_salary
+    FROM employees
+    GROUP BY department_id
+)
+SELECT e.first_name, e.last_name, a.avg_salary
+FROM employees e
+JOIN AvgSalaries a
+ON e.department_id = a.department_id;
+
+-- 15. Pivoting Data (MySQL Example)
+SELECT department_id,
+       SUM(CASE WHEN salary > 70000 THEN 1 ELSE 0 END) AS high_earners,
+       SUM(CASE WHEN salary <= 70000 THEN 1 ELSE 0 END) AS low_earners
+FROM employees
+GROUP BY department_id;
+
+-- 16. JSON Handling (For Databases That Support JSON)
+CREATE TABLE json_data (
+    id INT PRIMARY KEY,
+    details JSON
+);
+
+INSERT INTO json_data (id, details)
+VALUES (1, '{"name": "John", "age": 30, "role": "Developer"}');
+
+SELECT JSON_VALUE(details, '$.name') AS name
+FROM json_data;
+
+-- 17. Data Validation Using Constraints
+ALTER TABLE employees
+ADD CONSTRAINT chk_salary CHECK (salary >= 0);
+
+-- 18. Dropping Tables and Constraints
+DROP TABLE IF EXISTS json_data;
+
+ALTER TABLE employees
+DROP CONSTRAINT chk_salary;
+
+-- 19. Recursive CTE Example
+WITH RECURSIVE NumberSequence AS (
+    SELECT 1 AS number
+    UNION ALL
+    SELECT number + 1
+    FROM NumberSequence
+    WHERE number < 10
+)
+SELECT * FROM NumberSequence;
+
+-- 20. Full-Text Search (MySQL Example)
+CREATE FULLTEXT INDEX idx_fulltext
+ON employees (first_name, last_name);
+
+SELECT * FROM employees
+WHERE MATCH(first_name, last_name) AGAINST('John');
+
+-- 21. Generating Sample Data
+INSERT INTO employees (employee_id, first_name, last_name, hire_date, salary, department_id)
+SELECT seq, 'FirstName' || seq, 'LastName' || seq, CURRENT_DATE, FLOOR(RAND() * 100000 + 50000), seq % 2 + 1
+FROM (SELECT ROW_NUMBER() OVER() AS seq FROM information_schema.tables LIMIT 100) t;
+
+-- 22. Inserting Bulk Data
+INSERT INTO projects (project_id, project_name, start_date, end_date, budget)
+VALUES
+    (1, 'Project Alpha', '2023-01-01', '2023-06-30', 50000),
+    (2, 'Project Beta', '2023-07-01', '2023-12-31', 75000);
+
+INSERT INTO project_assignments (assignment_id, employee_id, project_id, assigned_date)
+VALUES
+    (1, 1, 1, '2023-01-05'),
+    (2, 2, 1, '2023-02-10'),
+    (3, 1, 2, '2023-07-15');
+
+-- 23. Complex SELECT Queries
+SELECT p.project_name, e.first_name, e.last_name
+FROM project_assignments pa
+JOIN projects p ON pa.project_id = p.project_id
+JOIN employees e ON pa.employee_id = e.employee_id
+WHERE p.start_date > '2023-01-01';
+
+-- 24. Nested Subqueries
+SELECT employee_id, (SELECT COUNT(*) FROM project_assignments pa WHERE pa.employee_id = e.employee_id) AS projects_assigned
+FROM employees e;
+
+-- 25. Conditional Updates
+UPDATE projects
+SET budget = budget * 1.2
+WHERE end_date > '2023-12-31';
+
+-- 26. Temporary Tables
+CREATE TEMPORARY TABLE temp_high_earners AS
+SELECT *
+FROM employees
+WHERE salary > 80000;
+
+SELECT * FROM temp_high_earners;
+DROP TABLE temp_high_earners;
+
+-- 27. Advanced Table Management
+CREATE TABLE projects (
+    project_id INT PRIMARY KEY,
+    project_name VARCHAR(100) NOT NULL,
+    start_date DATE,
+    end_date DATE,
+    budget DECIMAL(15, 2)
+);
+
+ALTER TABLE projects
+ADD COLUMN status VARCHAR(50) DEFAULT 'In Progress';
+
+-- 28. Inserting Multiple Rows
+INSERT INTO projects (project_id, project_name, start_date, end_date, budget, status)
+VALUES 
+    (1, 'Website Development', '2023-01-01', '2023-06-01', 50000, 'Completed'),
+    (2, 'Mobile App', '2023-03-15', '2023-12-15', 75000, 'In Progress'),
+    (3, 'Cloud Migration', '2023-07-01', '2024-01-01', 100000, 'Not Started');
+
+-- 29. Data Filtering with LIKE and BETWEEN
+SELECT project_name, budget
+FROM projects
+WHERE project_name LIKE '%Development%';
+
+SELECT project_name, start_date, end_date
+FROM projects
+WHERE start_date BETWEEN '2023-01-01' AND '2023-12-31';
+
+-- 30. Advanced Joins
+CREATE TABLE tasks (
+    task_id INT PRIMARY KEY,
+    project_id INT,
+    task_name VARCHAR(100),
+    assigned_to VARCHAR(50),
+    due_date DATE,
+    completed BOOLEAN DEFAULT FALSE,
+    FOREIGN KEY (project_id) REFERENCES projects(project_id)
+);
+
+SELECT p.project_name, t.task_name, t.assigned_to, t.due_date
+FROM projects p
+LEFT JOIN tasks t ON p.project_id = t.project_id
+WHERE t.completed = FALSE;
+
+-- 31. UNION Queries
+SELECT project_name AS name, start_date AS date
+FROM projects
+WHERE status = 'Completed'
+UNION
+SELECT task_name AS name, due_date AS date
+FROM tasks
+WHERE completed = TRUE;
+
+-- 32. Conditional Aggregations
+SELECT project_id, 
+       COUNT(*) AS total_tasks,
+       SUM(CASE WHEN completed THEN 1 ELSE 0 END) AS completed_tasks
+FROM tasks
+GROUP BY project_id;
+
+-- 33. Data Modifications
+UPDATE tasks
+SET completed = TRUE
+WHERE due_date < CURRENT_DATE AND completed = FALSE;
+
+DELETE FROM tasks
+WHERE completed = TRUE AND due_date < '2023-01-01';
+
+-- 34. Using Functions
+SELECT project_name,
+       DATEDIFF(end_date, start_date) AS duration_days,
+       ROUND(budget / DATEDIFF(end_date, start_date), 2) AS daily_budget
+FROM projects
+WHERE end_date IS NOT NULL;
+
+-- 35. Creating Triggers
+CREATE TRIGGER update_project_status
+AFTER UPDATE ON tasks
+FOR EACH ROW
+BEGIN
+    DECLARE total_tasks INT;
+    DECLARE completed_tasks INT;
+
+    SELECT COUNT(*) INTO total_tasks
+    FROM tasks
+    WHERE project_id = NEW.project_id;
+
+    SELECT COUNT(*) INTO completed_tasks
+    FROM tasks
+    WHERE project_id = NEW.project_id AND completed = TRUE;
+
+    IF total_tasks = completed_tasks THEN
+        UPDATE projects
+        SET status = 'Completed'
+        WHERE project_id = NEW.project_id;
+    END IF;
+END;
+
+-- 36. Dynamic SQL with Prepared Statements (MySQL Example)
+SET @tableName = 'tasks';
+SET @columnName = 'task_name';
+SET @query = CONCAT('SELECT ', @columnName, ' FROM ', @tableName, ' WHERE completed = TRUE');
+PREPARE stmt FROM @query;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+-- 37. Advanced JSON Usage (PostgreSQL Example)
+CREATE TABLE json_example (
+    id SERIAL PRIMARY KEY,
+    data JSONB
+);
+
+INSERT INTO json_example (data)
+VALUES ('{"name": "Task 1", "priority": "high", "tags": ["urgent", "backend"]}');
+
+SELECT data->>'name' AS name,
+       data->>'priority' AS priority
+FROM json_example;
+
+-- 38. Data Partitioning (PostgreSQL Example)
+CREATE TABLE sales (
+    sale_id SERIAL PRIMARY KEY,
+    sale_date DATE NOT NULL,
+    amount DECIMAL(10, 2) NOT NULL
+) PARTITION BY RANGE (sale_date);
+
+CREATE TABLE sales_2023
+PARTITION OF sales
+FOR VALUES FROM ('2023-01-01') TO ('2024-01-01');
+
+INSERT INTO sales_2023 (sale_date, amount)
+VALUES ('2023-03-15', 2500.00);
+
+-- 39. Advanced Recursive Queries
+WITH RECURSIVE Factorial AS (
+    SELECT 1 AS number, 1 AS fact
+    UNION ALL
+    SELECT number + 1, (number + 1) * fact
+    FROM Factorial
+    WHERE number < 10
+)
+SELECT * FROM Factorial;
+
+-- 40. Materialized Views
+CREATE MATERIALIZED VIEW high_budget_projects AS
+SELECT *
+FROM projects
+WHERE budget > 80000;
+
+REFRESH MATERIALIZED VIEW high_budget_projects;
+
+-- 41. Granting and Revoking Permissions
+GRANT SELECT, INSERT ON projects TO user1;
+REVOKE INSERT ON projects FROM user1;
+
+
+-- End of Script
